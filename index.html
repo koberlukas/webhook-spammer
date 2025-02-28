@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Discord Webhook Spammer</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/js/all.min.js"></script>
+    <style>
+        body {
+            font-family: 'Whitney', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            text-align: center;
+            background-color: #36393f;
+            color: #ffffff;
+            margin: 50px;
+        }
+        input, select {
+            width: 80%;
+            padding: 10px;
+            margin: 10px 0;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            background-color: #40444b;
+            color: #ffffff;
+        }
+        button {
+            padding: 12px 20px;
+            font-size: 16px;
+            color: white;
+            background-color: #5865f2;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+        button:disabled {
+            background-color: #4f545c;
+            cursor: not-allowed;
+        }
+        button:hover:enabled {
+            background-color: #4752c4;
+            transform: scale(1.05);
+        }
+        .stop {
+            background-color: #ed4245 !important;
+        }
+        .stop:hover {
+            background-color: #c5282e !important;
+        }
+        .container {
+            max-width: 500px;
+            margin: auto;
+            padding: 20px;
+            background: #2f3136;
+            border-radius: 8px;
+        }
+        .error {
+            display: none;
+            background-color: #ff5555;
+            color: #fff;
+            font-size: 14px;
+            padding: 5px;
+            border-radius: 4px;
+            margin-top: 5px;
+            width: 80%;
+            text-align: left;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .hidden {
+            display: none;
+        }
+        .visible {
+            display: block;
+        }
+        h2 {
+            font-size: 22px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2><i class="fab fa-discord"></i> Discord Webhook Spammer</h2>
+        <input type="text" id="webhookUrl" placeholder="Enter Discord Webhook URL" oninput="validateInputs()">
+        <div id="webhookError" class="error"><i class="fas fa-exclamation-triangle"></i> Invalid Webhook URL</div><br>
+
+        <div id="extraInputs" class="hidden">
+            <input type="text" id="messageText" placeholder="Enter message text" oninput="validateInputs()">
+            <div id="messageError" class="error"><i class="fas fa-exclamation-triangle"></i> Message cannot be empty</div><br>
+            <select id="delay" onchange="validateInputs()">
+                <option value="500">0.5 Second</option>
+                <option value="1000">1 Second</option>
+                <option value="2000">2 Seconds</option>
+                <option value="5000">5 Seconds</option>
+                <option value="10000">10 Seconds</option>
+                <option value="30000">30 Seconds</option>
+                <option value="60000">1 Minute</option>
+            </select><br>
+        </div>
+
+        <button id="toggleSpam" onclick="toggleSpam()" disabled><i class="fas fa-play"></i> Start Spamming</button>
+        <p class="footer"><i class="fas fa-robot"></i> Made using ChatGPT</p>
+    </div>
+
+    <script>
+        let spamInterval;
+
+        function validateInputs() {
+            const webhookUrl = document.getElementById("webhookUrl").value.trim();
+            const message = document.getElementById("messageText").value.trim();
+            const webhookError = document.getElementById("webhookError");
+            const messageError = document.getElementById("messageError");
+            const extraInputs = document.getElementById("extraInputs");
+            const button = document.getElementById("toggleSpam");
+
+            const webhookPattern = /^https:\/\/discord\.com\/api\/webhooks\/\d+\/[\w-]+$/;
+            const isWebhookValid = webhookPattern.test(webhookUrl);
+
+            if (!isWebhookValid) {
+                webhookError.style.display = "block";
+                extraInputs.classList.add("hidden");
+                button.disabled = true;
+                return;
+            } else {
+                webhookError.style.display = "none";
+                extraInputs.classList.remove("hidden");
+            }
+
+            if (message === "") {
+                messageError.style.display = "block";
+                button.disabled = true;
+                return;
+            } else {
+                messageError.style.display = "none";
+            }
+
+            button.disabled = false;
+        }
+
+        function toggleSpam() {
+            const button = document.getElementById("toggleSpam");
+
+            if (button.classList.contains("stop")) {
+                clearInterval(spamInterval);
+                button.innerHTML = '<i class="fas fa-play"></i> Start Spamming';
+                button.classList.remove("stop");
+            } else {
+                const webhookUrl = document.getElementById("webhookUrl").value.trim();
+                const message = document.getElementById("messageText").value.trim();
+                const delay = parseInt(document.getElementById("delay").value);
+
+                spamInterval = setInterval(() => {
+                    fetch(webhookUrl, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ content: message })
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            console.error("Failed to send message:", response.statusText);
+                        }
+                    })
+                    .catch(error => console.error("Error:", error));
+                }, delay);
+
+                button.innerHTML = '<i class="fas fa-stop"></i> Stop Spamming';
+                button.classList.add("stop");
+            }
+        }
+    </script>
+</body>
+</html>
